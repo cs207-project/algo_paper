@@ -2,11 +2,12 @@
 # Homework 4: Clustering
 # Name:
 # Email:
-
+import time
 import numpy as np 
 import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
 import matplotlib.image as mpimg
-class KMeans(object):
+class myKMeans(object):
         # K is the K in KMeans
         # useKMeansPP is a boolean. If True, you should initialize using KMeans++
     def __init__(self, K, useKMeansPP):
@@ -19,7 +20,7 @@ class KMeans(object):
         elif self.useKMeansPP:
             return self.kpp(X)
         else:
-            raise ValueError('go fuck yourself')
+            raise ValueError('Unknown')
     # X is a (N x 28 x 28) array where 28x28 is the dimensions of each of the N images.
     def kpp(self, X):
         mus = np.zeros((self.K, X.shape[1], X.shape[2]))
@@ -160,9 +161,10 @@ class KMeans(object):
             elif self.useKMeansPP:
                 plt.savefig('KPPmeanK().png'.format(self.K))
         plt.show()
+
 # This line loads the images for you. Don't change it! 
 pics = np.load("images.npy", allow_pickle=False)
-
+'''
 # You are welcome to change anything below this line. This is just an example of how your code may look.
 # That being said, keep in mind that you should not change the constructor for the KMeans class, 
 # though you may add more public methods for things like the visualization if you want.
@@ -175,3 +177,39 @@ KMeansClassifier.show_mean(savefig = False)
 idxes = KMeansClassifier.get_representative_images(8)
 
 KMeansClassifier.show_reps(False)
+'''
+sizes = np.arange(0, 6000, 300)
+clusters = np.arange(1, 15, 1)
+times = np.empty(len(clusters))
+times2 = np.empty(len(clusters))
+
+def wrapper_scikit(K):
+    pics_t = np.empty((pics.shape[0],np.power(pics.shape[1],2)))
+    for i in range(pics_t.shape[0]):
+        pics_t[i] = pics[i].flatten()
+    time1 = time.time()
+    kmean = KMeans(init='random', n_clusters=K)
+    kmean.fit_transform(pics_t)
+    time2 = time.time()
+    return (time2-time1)*1000.
+
+def wrapper_kmean(K):
+    time1 = time.time()
+    KMeansClassifier = myKMeans(K, useKMeansPP=False)
+    KMeansClassifier.fit(pics)
+    time2 = time.time()
+    return (time2-time1)*1000.
+
+for i in range(1, len(clusters)):
+    times[i] = wrapper_kmean(clusters[i])
+    times2[i] = wrapper_scikit(clusters[i])
+    print times[i], times2[i]
+
+plt.xlabel('Number of clusters')
+plt.ylabel('Time in milliseconds')
+plt.plot(clusters, times,label=r'Python Implementation')
+plt.plot(clusters, times2, label=r'Scikit-learn Implementation')
+plt.legend(loc='best')
+plt.show()
+
+
